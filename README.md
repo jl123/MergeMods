@@ -1,2 +1,338 @@
 # MergeMods
 Companion to MergeMods that allows customization of table and audio themes for Merge Poker Network
+
+#SingleInstance force
+#NoEnv
+SendMode Input
+#WinActivateForce
+;#NoTrayIcon
+Sysget, Mon2, Monitor, 2
+DetectHiddenText, On
+SetDefaultMouseSpeed, 0
+OnExit, handle_exit
+SetControlDelay, -1
+SetTitleMatchMode,2
+SetWorkingDir, %A_ScriptDir%\Setup Files
+version=1.02
+versurl=http://www.runbetterpoker.com/joe/testingFT.html
+SetWinDelay,-1
+SetKeyDelay,-1
+
+;GoSub, VersionCheck
+;if version!=%currversion%
+;  {
+;  MsgBox,,NEW VERSION AVAILABLE,Your current installaton (Beta %version%) is not up to date`n`nBeta %currversion% avaiable at ://www.RunBetterPoker.com,10
+;  exit
+;  }
+
+
+IniRead, username, %A_WorkingDir%\playersetup.ini, playerset, username
+IniRead, client, %A_WorkingDir%\playersetup.ini, playerset, client
+lobby = %client% - %username% (Connected)
+lobbydc = %client% (Disconnected) - Not Logged In
+lobbyrc = %client% (Reconnecting) - Not Logged In
+login = %client% (Connected) - Not Logged In
+;ifWinExist, %login%
+;  MsgBox, sadfsdfdf
+modsfolder=%A_ScriptDir%\Mods
+IniRead,soundfolder, %A_WorkingDir%\mmsetup.ini,FTsounds, soundfolder
+if soundfolder=ERROR
+  soundfolder=
+;InputBox, soundfolder,Select Folder,Select folder where Merge sounds are (resource file)`n`nExample:`nC:\Program Files (x86)\CarbonPoker\resources,,,,,,,,%soundfolder%
+
+IfNotexist, %modsfolder%
+  FileCreateDir, %modsfolder%
+IfNotExist, %modsfolder%\sounds.zip
+  {
+  tooltip DOWNLOADING SOUNDS FILE...
+  URLDownloadToFile,http://runbetterpoker.com/joe/sounds.zip, %modsfolder%\sounds.zip
+  sleep,5000
+  }
+IfNotExist, %modsfolder%\tables.zip
+  {
+  tooltip DOWNLOADING IMAGE FILE...
+  URLDownloadToFile,http://runbetterpoker.com/joe/tables.zip, %modsfolder%\tables.zip
+  sleep,5000
+  }
+ tooltip
+
+soundoff:=
+soundon:=
+/*
+IniRead, soundchoice,%A_WorkingDir%\mmsetup.ini, choices,soundchoice
+if soundchoice=ERROR
+  soundchoice=None
+if soundchoice=""
+  soundchoice=None
+Msgbox, %soundchoice%
+*/
+IniRead, soundtoggle, %A_WorkingDir%\mmsetup.ini, toggles, soundtoggle
+if soundtoggle=1
+  soundon=checked
+else
+  soundoff=checked
+
+imageoff:=
+imageon:=
+IniRead, imagetoggle, %A_WorkingDir%\mmsetup.ini, toggles, imagetoggle
+if imagetoggle=1
+  imageon=checked
+else
+  imageoff=checked
+ 
+;iniread toggles.....add tooltip to function to test
+
+;GoSub,selectfolder
+;GoSub,change
+;SetTimer, lobbycheck,-100
+;return
+guivis=0
+/*
+zipFiles=None|
+Loop, %modsfolder%\*.zip
+  {
+  if A_LoopFileName = %soundchoice%
+    zipFiles .= A_LoopFilename "||"
+  else
+    zipFiles .= A_LoopFilename "|"
+  }
+MsgBox, %zipFiles%
+;StringTrimRight, zipFiles, zipFiles, 1
+*/
+
+LaunchGui:
+;----------------------------------------------------------------------
+Gui, Add, Text, x12 y12 w500 h110 , Select folder where Merge default sound/table image files are located (resource file)`n`nExample: C:\Program Files (x86)\CarbonPoker\resources
+Gui, Add, Edit, x12 y65 w360 h20 vsoundfolder, %soundfolder%
+Gui, Add, Text, x12 y110 w150 h30 , Use custom sounds
+Gui, Add,Radio, x130 y110 w60 h20 %soundon% vsoundtoggle, On
+Gui, Add, Radio, x190 y110 w70 h20 %soundoff%, Off
+Gui, Add, Text, x12 y140 w150 h30 , Use custom images
+Gui, Add, Radio, x130 y140 w60 h20 %imageon% vimagetoggle, On
+Gui, Add, Radio, x190 y140 w70 h20 %imageoff%, Off
+/*
+Gui, Add, DDL, x130 y170 w240 r10 vsoundchoice1 %soundchoice%, %zipFiles%
+*/
+Gui, Add, Text, x12 y185 w500 h110 , INSTRUCTIONS:`n`n-Modified sound/image zip files can be found at:`nC:\Program Files (x86)\RunBetterPoker.com MergeKeys Beta\Mods`n-Files can be modified and will update when you restart Merge client.`n-If you delete them, the included files will redownload from RunBetterPoker.com`n-Included sound file is Full Tilt sounds.`n-Included tables file allows black carpet to be used for MergeKeys. 
+Gui, Add, Button, x12 y300 w100 h30 gwebsite, More Instructions
+Gui, Add, Button, x12 y340 w160 h30 gSave, Save and Continue
+xxxxxx:=(a_Screenwidth/2)-370
+yyyyyy:=(a_screenheight/2)-245
+Gui, Show, x%xxxxxx% y%yyyyyy% h380 w420 hide, RunBetterPoker.com MergeMods BETA %version%
+
+GuiControlGet,sound1,,soundtoggle ;get info from radio button
+GuiControlGet,image1,,imagetoggle ;get info from radio button
+GuiControlGet,soundchoice,,soundchoice1
+;loop if folder not active....
+;MsgBox,%sound1%,%image1%
+;GoSub,change
+
+;MsgBox, %soundchoice%
+Menu, Tray, Add, Restore, Restore
+Menu, Tray, default, Restore
+Menu, Tray, Click, 1
+
+gui +lastfound
+
+
+if (imagetoggle=1||soundtoggle=1)
+  SetTimer, lobbycheck,-100
+  
+setTitleMatchMode,2
+WinWait, Bad Beat
+
+return
+
+website:
+Run www.runbetterpoker.com/?q=MergeMods
+return
+
+;;;;;;;;;;;;;;;SEPARATE SOUND/VIEW SOUND LOBBY-----view LOGIN
+
+lobbycheck:
+If (!WinExist(lobby)&&!WinExist(lobbydc)&&!WinExist(lobbyrc)&&!WinExist(login))
+  {
+    IfExist, %soundfolder%\view.pokertemp.dat
+      GoSub, replacetables
+    IfExist, %soundfolder%\soundstemp.dat
+      GoSub, replacesound
+  }
+else
+  {
+  If (WinExist(lobby)&&sound1=1)
+  IfNotExist, %soundfolder%\soundstemp.dat
+    {
+    gosub, changesound
+	}
+  If (WinExist(login)&&image1=1)
+  IfNotExist,%soundfolder%\view.pokertemp.dat
+    {
+	gosub, changetables
+    }
+  }    
+Settimer,lobbycheck,-100
+Return
+
+selectfolder:
+
+
+Return
+
+Restore:
+  {
+  gui +lastfound
+  WinShow
+  WinRestore
+  WinActivate
+  Menu,Tray,NoIcon
+  }
+Return
+
+GuiSize:
+;mintraytoggle=1
+;MSgBox, %A_eventInfo%  ;test code
+If (A_EventInfo=1)
+    {
+	Menu,Tray,Icon
+	Gui, Hide
+	}
+Return
+
+/*
+A::
+FileDelete,%soundfolder%\stylesheet.dat
+FileCopy,%modsfolder%\stylesheet.zip,%soundfolder%\stylesheet.dat
+Return
+*/
+
+changesound:
+FileCopy,%soundfolder%\sounds.dat, %soundfolder%\soundstemp.dat
+FileDelete,%soundfolder%\sounds.dat
+FileCopy,%modsfolder%\sounds.zip,%soundfolder%\sounds.dat
+sleep,500
+IfNotExist, %soundfolder%\soundstemp.dat
+  MsgBox, Sound transfers may have failed.  The most likely cause is MergeMods is not being run as Administrator.  Please see video for instructions or email Support@RuunBetterPoker.com.
+Return
+
+
+changetables:
+FileCopy, %soundfolder%\view.poker.dat,%soundfolder%\view.pokertemp.dat
+FileDelete, %soundfolder%\view.poker.dat
+FileCopy, %modsfolder%\tables.zip,%soundfolder%\view.poker.dat
+sleep,500
+IfNotExist, %soundfolder%\view.pokertemp.dat
+  MsgBox, Image transfers may have failed.  The most likely cause is MergeMods is not being run as Administrator.  Please see video for instructions or email Support@RuunBetterPoker.com.
+Return
+
+replacesound:
+;Msgbox, deleting
+FileDelete, %soundfolder%\sounds.dat
+FileCopy, %soundfolder%\soundstemp.dat,%soundfolder%\sounds.dat
+FileDelete, %soundfolder%\soundstemp.dat
+Return
+
+replacetables:
+FileDelete, %soundfolder%\view.poker.dat
+FileCopy, %soundfolder%\view.pokertemp.dat,%soundfolder%\view.poker.dat
+fileDelete, %soundfolder%\view.pokertemp.dat
+Return
+
+save:
+
+;MsgBox, Saving will overwrite last known configuration.`n`nAre you sure you want to save?
+;If message ok{
+
+GuiControlGet,sound1,,soundtoggle
+GuiControlGet,soundfolder,,soundfolder ;get info from radio button
+GuiControlGet,image1,,imagetoggle ;get info from radio button
+IniWrite, %soundfolder%, %A_WorkingDir%\mmsetup.ini,FTsounds,soundfolder
+IniWrite, %sound1%, %A_WorkingDir%\mmsetup.ini, toggles, soundtoggle
+IniWrite, %image1%, %A_WorkingDir%\mmsetup.ini, toggles, imagetoggle
+IniWrite, %soundchoice%,%A_WorkingDir%\mmsetup.ini, choices, soundchoice
+
+;}
+reload
+; If.....
+  ; {
+  ; GuiSubmit
+  ; IniWrite
+  ; sounds
+  ; images
+  ; file
+  ; }
+Return
+
+GuiClose:
+handle_exit:
+ExitApp
+
+/*
+!^#`::
+Return
+*/
+
+VersionCheck:
+currversion=% UrlDownloadToVar(versurl)
+
+
+//open soutrce functions
+UrlDownloadToVar(URL, Proxy="", ProxyBypass="") {
+AutoTrim, Off
+hModule := DllCall("LoadLibrary", "str", "wininet.dll")
+
+If (Proxy != "")
+AccessType=3
+Else
+AccessType=1
+;INTERNET_OPEN_TYPE_PRECONFIG                    0   // use registry configuration
+;INTERNET_OPEN_TYPE_DIRECT                       1   // direct to net
+;INTERNET_OPEN_TYPE_PROXY                        3   // via named proxy
+;INTERNET_OPEN_TYPE_PRECONFIG_WITH_NO_AUTOPROXY  4   // prevent using java/script/INS
+
+io_hInternet := DllCall("wininet\InternetOpenA"
+, "str", "" ;lpszAgent
+, "uint", AccessType
+, "str", Proxy
+, "str", ProxyBypass
+, "uint", 0) ;dwFlags
+
+iou := DllCall("wininet\InternetOpenUrlA"
+, "uint", io_hInternet
+, "str", url
+, "str", "" ;lpszHeaders
+, "uint", 0 ;dwHeadersLength
+, "uint", 0x80000000 ;dwFlags: INTERNET_FLAG_RELOAD = 0x80000000 // retrieve the original item
+, "uint", 0) ;dwContext
+
+If (ErrorLevel != 0 or iou = 0) {
+DllCall("FreeLibrary", "uint", hModule)
+return 0
+}
+
+VarSetCapacity(buffer, 512, 0)
+VarSetCapacity(NumberOfBytesRead, 4, 0)
+Loop
+{
+  irf := DllCall("wininet\InternetReadFile", "uint", iou, "uint", &buffer, "uint", 512, "uint", &NumberOfBytesRead)
+  NOBR = 0
+  Loop 4  ; Build the integer by adding up its bytes. - ExtractInteger
+    NOBR += *(&NumberOfBytesRead + A_Index-1) << 8*(A_Index-1)
+  IfEqual, NOBR, 0, break
+  ;BytesReadTotal += NOBR
+  DllCall("lstrcpy", "str", buffer, "uint", &buffer)
+  res = %res%%buffer%
+}
+StringTrimRight, res, res, 0
+
+DllCall("wininet\InternetCloseHandle",  "uint", iou)
+DllCall("wininet\InternetCloseHandle",  "uint", io_hInternet)
+DllCall("FreeLibrary", "uint", hModule)
+AutoTrim, on
+return, res
+}
+Return
+
+;a::
+;WinGetActiveTitle, dc
+;clipboard = %dc%
+;Return
